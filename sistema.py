@@ -1,36 +1,30 @@
-# ============================================================
 # Sistema de Gestao de Pecas Industriais
-# Desafio de Automacao Digital - Qualidade e Armazenamento
-# ============================================================
+# Trabalho de Algoritmos e Logica de Programacao - UniFECAF
 
 from datetime import datetime
 
-# ---------- Dados globais ----------
-pecas_aprovadas = []      # Lista de dicts com dados das pecas aprovadas
-pecas_reprovadas = []     # Lista de dicts com dados das pecas reprovadas e motivos
-caixa_atual = []          # Lista de IDs das pecas na caixa aberta
-caixas_fechadas = []      # Lista de dicts com info das caixas ja fechadas
-numero_caixa = 1          # Contador de caixas
+# listas que guardam os dados durante o programa
+pecas_aprovadas = []   # pecas que passaram na avaliacao
+pecas_reprovadas = []  # pecas que nao passaram, com os motivos
+caixa_atual = []       # IDs das pecas na caixa aberta no momento
+caixas_fechadas = []   # historico das caixas que ja foram fechadas
+numero_caixa = 1       # numero da caixa atual
 
 
 def avaliar_peca(peso, cor, comprimento):
-    """
-    Avalia uma peca com base nos criterios de qualidade.
-    Retorna uma tupla (aprovada, motivos) onde:
-      - aprovada: True se passou em todos os criterios
-      - motivos: lista com os motivos de reprovacao (vazia se aprovada)
-    """
+    # verifica se a peca atende todos os criterios de qualidade
+    # retorna True/False e uma lista com os motivos de reprovacao
     motivos = []
 
-    # Criterio 1: peso entre 95g e 105g
+    # checa o peso
     if peso < 95 or peso > 105:
         motivos.append("Peso fora do intervalo (95g a 105g)")
 
-    # Criterio 2: cor deve ser azul ou verde
+    # cor tem que ser azul ou verde, ignorando maiusculas/minusculas
     if cor.lower() not in ("azul", "verde"):
         motivos.append("Cor invalida (deve ser azul ou verde)")
 
-    # Criterio 3: comprimento entre 10cm e 20cm
+    # checa o comprimento
     if comprimento < 10 or comprimento > 20:
         motivos.append("Comprimento fora do intervalo (10cm a 20cm)")
 
@@ -39,10 +33,7 @@ def avaliar_peca(peso, cor, comprimento):
 
 
 def fechar_caixa():
-    """
-    Fecha a caixa atual: salva seus dados nas caixas_fechadas
-    e inicia uma nova caixa vazia.
-    """
+    # fecha a caixa atual salvando os dados e abre uma nova
     global caixa_atual, numero_caixa
 
     caixa = {
@@ -62,24 +53,19 @@ def fechar_caixa():
 
 
 def cadastrar_peca():
-    """
-    Solicita os dados de uma nova peca ao usuario, valida as entradas,
-    avalia a qualidade e armazena na lista correta (aprovadas ou reprovadas).
-    Se a caixa atual atingir 10 pecas, fecha automaticamente.
-    """
+    # pede os dados da peca, valida e decide se vai para aprovadas ou reprovadas
     global caixa_atual
 
     print("\n" + "=" * 50)
     print("       CADASTRO DE NOVA PECA")
     print("=" * 50)
 
-    # Solicitar ID
     id_peca = input("ID da peca: ").strip()
     if not id_peca:
         print("[ERRO] O ID nao pode ser vazio.")
         return
 
-    # Verificar se ID ja existe
+    # checa se o ID ja foi cadastrado antes
     for p in pecas_aprovadas:
         if p["id"] == id_peca:
             print(f"[ERRO] Ja existe uma peca com o ID '{id_peca}'.")
@@ -89,27 +75,25 @@ def cadastrar_peca():
             print(f"[ERRO] Ja existe uma peca com o ID '{id_peca}'.")
             return
 
-    # Solicitar peso com validacao
+    # uso try/except para evitar que o programa quebre se o usuario digitar errado
     try:
         peso = float(input("Peso (em gramas): "))
     except ValueError:
         print("[ERRO] Peso invalido. Informe um numero.")
         return
 
-    # Solicitar cor
     cor = input("Cor: ").strip()
     if not cor:
         print("[ERRO] A cor nao pode ser vazia.")
         return
 
-    # Solicitar comprimento com validacao
     try:
         comprimento = float(input("Comprimento (em cm): "))
     except ValueError:
         print("[ERRO] Comprimento invalido. Informe um numero.")
         return
 
-    # Avaliar a peca
+    # manda avaliar e ve o resultado
     aprovada, motivos = avaliar_peca(peso, cor, comprimento)
 
     print("-" * 50)
@@ -129,7 +113,7 @@ def cadastrar_peca():
         print(f"  Peca '{id_peca}' adicionada a Caixa {numero_caixa}.")
         print(f"  Pecas na caixa atual: {len(caixa_atual)}/10")
 
-        # Verificar se a caixa atingiu a capacidade maxima
+        # se encheu, fecha a caixa automaticamente
         if len(caixa_atual) == 10:
             fechar_caixa()
     else:
@@ -151,15 +135,11 @@ def cadastrar_peca():
 
 
 def listar_pecas():
-    """
-    Lista todas as pecas cadastradas, separando aprovadas e reprovadas.
-    Mostra o numero da caixa para aprovadas e os motivos para reprovadas.
-    """
+    # mostra todas as pecas separadas por aprovadas e reprovadas
     print("\n" + "=" * 50)
     print("       LISTAGEM DE PECAS")
     print("=" * 50)
 
-    # Pecas aprovadas
     print("\n--- PECAS APROVADAS ---")
     if not pecas_aprovadas:
         print("  Nenhuma peca aprovada.")
@@ -168,7 +148,6 @@ def listar_pecas():
             print(f"  ID: {p['id']} | Peso: {p['peso']}g | Cor: {p['cor']} | "
                   f"Comprimento: {p['comprimento']}cm | Caixa: {p['caixa']}")
 
-    # Pecas reprovadas
     print("\n--- PECAS REPROVADAS ---")
     if not pecas_reprovadas:
         print("  Nenhuma peca reprovada.")
@@ -183,10 +162,7 @@ def listar_pecas():
 
 
 def remover_peca():
-    """
-    Remove uma peca pelo ID, buscando tanto nas aprovadas quanto nas reprovadas.
-    Se a peca estava aprovada e na caixa atual, reorganiza a caixa.
-    """
+    # busca a peca pelo ID e remove de onde ela estiver
     global caixa_atual
 
     print("\n" + "=" * 50)
@@ -195,18 +171,17 @@ def remover_peca():
 
     id_peca = input("Informe o ID da peca a remover: ").strip()
 
-    # Buscar nas aprovadas
+    # procura primeiro nas aprovadas
     for i, p in enumerate(pecas_aprovadas):
         if p["id"] == id_peca:
             pecas_aprovadas.pop(i)
 
-            # Remover da caixa atual se estiver la
             if id_peca in caixa_atual:
                 caixa_atual.remove(id_peca)
                 print(f"  Peca '{id_peca}' removida da caixa atual.")
             else:
+                # se nao ta na caixa atual, ta em alguma caixa fechada
                 print(f"  Peca '{id_peca}' estava em uma caixa ja fechada.")
-                # Remover da caixa fechada correspondente
                 for caixa in caixas_fechadas:
                     if id_peca in caixa["pecas"]:
                         caixa["pecas"].remove(id_peca)
@@ -217,7 +192,7 @@ def remover_peca():
             print(f"  Peca aprovada '{id_peca}' removida com sucesso!")
             return
 
-    # Buscar nas reprovadas
+    # se nao achou nas aprovadas, tenta nas reprovadas
     for i, p in enumerate(pecas_reprovadas):
         if p["id"] == id_peca:
             pecas_reprovadas.pop(i)
@@ -228,10 +203,7 @@ def remover_peca():
 
 
 def listar_caixas():
-    """
-    Lista todas as caixas fechadas com suas informacoes:
-    numero, quantidade de pecas, lista de IDs e data/hora de fechamento.
-    """
+    # mostra as caixas que ja foram fechadas e o status da caixa atual
     print("\n" + "=" * 50)
     print("       CAIXAS FECHADAS")
     print("=" * 50)
@@ -245,7 +217,7 @@ def listar_caixas():
             print(f"    IDs das pecas: {', '.join(caixa['pecas'])}")
             print(f"    Fechamento: {caixa['fechamento']}")
 
-    # Mostrar caixa atual
+    # mostra tambem a caixa que ta aberta agora
     print(f"\n  --- Caixa atual (Caixa {numero_caixa}): "
           f"{len(caixa_atual)}/10 pecas ---")
     if caixa_atual:
@@ -255,13 +227,7 @@ def listar_caixas():
 
 
 def gerar_relatorio():
-    """
-    Gera um relatorio consolidado com:
-    - Total de pecas cadastradas (aprovadas + reprovadas)
-    - Total de aprovadas e reprovadas
-    - Detalhamento dos motivos de reprovacao
-    - Quantidade de caixas fechadas e estado da caixa atual
-    """
+    # gera um resumo geral de tudo que foi cadastrado
     print("\n" + "=" * 50)
     print("       RELATORIO FINAL")
     print("=" * 50)
@@ -274,7 +240,7 @@ def gerar_relatorio():
     print(f"  Total de pecas aprovadas:   {total_aprovadas}")
     print(f"  Total de pecas reprovadas:  {total_reprovadas}")
 
-    # Detalhamento dos motivos de reprovacao
+    # conta quantas vezes cada motivo apareceu
     print("\n  --- Detalhamento dos motivos de reprovacao ---")
     if not pecas_reprovadas:
         print("  Nenhuma peca reprovada.")
@@ -290,7 +256,6 @@ def gerar_relatorio():
         for motivo, quantidade in contagem_motivos.items():
             print(f"    - {motivo}: {quantidade} peca(s)")
 
-    # Informacoes sobre caixas
     print("\n  --- Informacoes sobre caixas ---")
     print(f"  Caixas fechadas: {len(caixas_fechadas)}")
 
@@ -304,7 +269,7 @@ def gerar_relatorio():
 
 
 def exibir_menu():
-    """Exibe o menu principal do sistema."""
+    # imprime o menu de opcoes
     print("\n" + "=" * 50)
     print("  SISTEMA DE GESTAO DE PECAS INDUSTRIAIS")
     print("=" * 50)
@@ -318,7 +283,7 @@ def exibir_menu():
 
 
 def main():
-    """Funcao principal que controla o loop do menu interativo."""
+    # loop principal do programa, fica rodando ate o usuario digitar 0
     while True:
         exibir_menu()
         opcao = input("  Escolha uma opcao: ").strip()
@@ -340,6 +305,6 @@ def main():
             print("\n  [ERRO] Opcao invalida. Tente novamente.")
 
 
-# Ponto de entrada do programa
+# inicia o programa
 if __name__ == "__main__":
     main()
